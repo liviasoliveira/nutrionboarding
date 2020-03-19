@@ -10,6 +10,19 @@ import UIKit
 
 class ViewController: UIViewController, UITextFieldDelegate, UIPickerViewDelegate, UIPickerViewDataSource{
     
+//    let tableview: UITableView = {
+//        let tv = UITableView()
+//        tv.backgroundColor = UIColor.white
+//        tv.translatesAutoresizingMaskIntoConstraints = false
+//        return tv
+//    }()
+//
+//    func setupTableView() {
+//        tableview.register(UITableViewCell.self, forCellReuseIdentifier: "cellId")
+//
+//        view.addSubview(tableview)
+//    }
+    
     
     //Collection One
     @IBOutlet var estadoDoAlimento: UITextField!
@@ -83,8 +96,6 @@ class ViewController: UIViewController, UITextFieldDelegate, UIPickerViewDelegat
         
         cebolaButton.setTitle(tempoCalculado, for:.normal)
         
-        
-        
     }
     
     @IBAction func tocarTela(_ sender: Any) {
@@ -97,8 +108,15 @@ class ViewController: UIViewController, UITextFieldDelegate, UIPickerViewDelegat
         super.viewDidLoad()
         // Do any additional setup after loading the view.
         
+        NotificationCenter.default.addObserver(self, selector: #selector(keyboardWillShow), name: UIResponder.keyboardWillShowNotification, object: nil)
+        NotificationCenter.default.addObserver(self, selector: #selector(keyboardWillHide), name: UIResponder.keyboardWillHideNotification, object: nil)
+        
+        // setupTableView()
+        
         let tap = UITapGestureRecognizer(target: self.view, action: #selector(UIView.endEditing))
         view.addGestureRecognizer(tap)
+        
+        
         
         
         self.pesoMacarrao.delegate = self
@@ -106,6 +124,11 @@ class ViewController: UIViewController, UITextFieldDelegate, UIPickerViewDelegat
         self.estadoPicker1.dataSource = self
         self.modoPicker1.delegate = self
         self.modoPicker1.dataSource = self
+        
+        //Arredondar as views
+        macarraoView.layer.cornerRadius = 12
+        tomateView.layer.cornerRadius = 12
+        cebolaView.layer.cornerRadius = 12
         
         //Indicar que o textfield é um pickerview
         estadoDoAlimento.inputView = estadoPicker1
@@ -132,6 +155,24 @@ class ViewController: UIViewController, UITextFieldDelegate, UIPickerViewDelegat
         
     }
     
+    @objc func keyboardWillShow(notification: NSNotification) {
+        guard let userInfo = notification.userInfo else {return}
+        guard let keyboardSize = userInfo[UIResponder.keyboardFrameEndUserInfoKey] as? NSValue else {return}
+        let keyboardFrame = keyboardSize.cgRectValue
+
+        if self.view.frame.origin.y == 0 {
+            self.view.frame.origin.y -= keyboardFrame.height
+        }
+    }
+
+    @objc func keyboardWillHide(notification: NSNotification) {
+        if self.view.frame.origin.y != 0 {
+            self.view.frame.origin.y = 0
+        }
+    }
+    
+    // "?? 0" representa para o código que não precisará de um valor para peso e pessoas para que haja um valor final em calcular tempo. Evita bug.
+    
     func calcularTempo(peso: String, pessoas: String) -> Int {
         // Transformar texto em Int
         let pesoInt: Int
@@ -145,12 +186,6 @@ class ViewController: UIViewController, UITextFieldDelegate, UIPickerViewDelegat
         
         
         return calcularTempo
-        
-        // Lê picker do estado de alimento
-        // Lê picker do modo de preparo
-        // Multiplicar o valor escrito em peso por 10
-        // Somar 20 minutos caso o alimento esteja congelado
-        // Calcular tempo total
         
     }
     
@@ -170,6 +205,12 @@ class ViewController: UIViewController, UITextFieldDelegate, UIPickerViewDelegat
     
     func voltarparaTelaInicial() {
         // Se clicar fora da tela de cadastro, será redirecionado para a tela inicial
+    }
+   
+    @IBAction func buttonTapReturn() {
+        macarraoView.alpha = 1
+        tomateView.alpha = 1
+        cebolaView.alpha = 1
     }
     
     // Função para ocultar as outras collections e só deixar macarrão
@@ -203,8 +244,9 @@ class ViewController: UIViewController, UITextFieldDelegate, UIPickerViewDelegat
         }
         
     }
-    // Picker. Lembrar que esse return retorna a quantidade de colunas. O numero de componentes diz quantas colunas e linhas terao para cada picker.
     
+    // Picker. Lembrar que esse return retorna a quantidade de colunas. O numero de componentes diz quantas colunas e linhas terao para cada picker.
+
     func numberOfComponents(in pickerView: UIPickerView) -> Int {
         if pickerView == estadoPicker1{
             return 1
@@ -224,6 +266,7 @@ class ViewController: UIViewController, UITextFieldDelegate, UIPickerViewDelegat
         }
         
     }
+    
     //Conexao do pickerview com o array que são
     
     func pickerView(_ pickerView: UIPickerView, titleForRow row: Int, forComponent component:Int) -> String? {
@@ -262,11 +305,14 @@ class ViewController: UIViewController, UITextFieldDelegate, UIPickerViewDelegat
     
 }
 
+// Extensão para o protocolo de TextField que haverá um botão "ok" toda vez que aparecer o teclado numérico.
 extension UITextField{
     
     func addDoneButtonToKeyboard(myAction:Selector?){
         let doneToolbar: UIToolbar = UIToolbar(frame: CGRect(x: 0, y: 0, width: 300, height: 40))
         doneToolbar.barStyle = UIBarStyle.default
+        
+        doneToolbar.backgroundColor = UIColor.white
         
         let flexSpace = UIBarButtonItem(barButtonSystemItem: UIBarButtonItem.SystemItem.flexibleSpace, target: nil, action: nil)
         let done: UIBarButtonItem = UIBarButtonItem(title: "OK", style: UIBarButtonItem.Style.done, target: self, action: myAction)
@@ -280,5 +326,7 @@ extension UITextField{
         
         self.inputAccessoryView = doneToolbar
     }
+    
+    
 }
 
